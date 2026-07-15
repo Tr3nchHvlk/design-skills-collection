@@ -1,0 +1,105 @@
+/* ============================================================================
+   Liquid Glass — reusable CSS utilities (CSS/SVG approach, no JS/WebGL).
+   Pair with assets/svg-filters.html for the refractive (displacement) variants.
+   Every rule works over a DETAILED background — glass needs something to refract.
+   Add -webkit- prefixes for Safari where noted.
+   ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   A) PLAIN GLASSMORPHISM  (widest support; no SVG filter, no refraction)
+   Frosted translucent panel. This is the "baseline" look.
+---------------------------------------------------------------------------- */
+.glass {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  border-radius: 24px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.glass--dark {                       /* dark/smoked variant for light backgrounds */
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(0, 0, 0, 0.20);
+  border-radius: 24px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ----------------------------------------------------------------------------
+   B) REFRACTIVE PANEL via pseudo-elements  (needs #lg-refract from svg-filters)
+   .glass-refract           = the panel (give it size + a border-radius)
+   ::after  = the LENS  (captures backdrop with blur(0) then displaces it)
+   ::before = the RIM   (inset highlight = glass thickness)
+   Keep border-radius identical on the element, ::before and ::after.
+---------------------------------------------------------------------------- */
+.glass-refract {
+  position: relative;
+  border-radius: 30px;
+  isolation: isolate;
+}
+.glass-refract::before {             /* rim / bevel highlight */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  box-shadow: inset 2px 2px 0 -2px rgba(255,255,255,.7),
+              inset 0 0 3px 1px rgba(255,255,255,.7);
+  pointer-events: none;
+}
+.glass-refract::after {              /* the lens: MUST have backdrop-filter to capture */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  overflow: hidden;
+  isolation: isolate;
+  backdrop-filter: blur(0px);        /* declaration required even at 0 */
+  -webkit-backdrop-filter: blur(0px);
+  filter: url(#lg-refract);          /* swap for #lg-warp for a stronger warp */
+}
+
+/* ----------------------------------------------------------------------------
+   C) SINGLE-PROPERTY refractive surface  (modern; Chromium-first)
+   Applies an SVG filter straight to the backdrop. Use #lg-lens (round buttons)
+   or #lg-refract. Narrowest support (Firefox won't apply it).
+---------------------------------------------------------------------------- */
+.glass-lens {
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 999px;              /* pill/circle for the round lens map */
+  background: linear-gradient(135deg, rgba(255,255,255,.2), rgba(255,255,255,.03));
+  backdrop-filter: url(#lg-lens);
+  -webkit-backdrop-filter: url(#lg-lens);
+}
+
+/* ----------------------------------------------------------------------------
+   D) FOUR-LAYER stack  (Apple-dock style; most control)
+   Wrap content in .lg-wrapper and add the four layers as children in order.
+   Needs #lg-refract (or #lg-warp) on the effect layer.
+   Round-radius rule: set it on .lg-wrapper AND every > div child.
+---------------------------------------------------------------------------- */
+.lg-wrapper {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  border-radius: 2rem;
+  box-shadow: 0 6px 6px rgba(0,0,0,.2), 0 0 20px rgba(0,0,0,.1);
+}
+.lg-wrapper > .lg-effect {           /* z0: blur + refraction */
+  position: absolute; inset: 0; z-index: 0; border-radius: inherit;
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  filter: url(#lg-refract);
+}
+.lg-wrapper > .lg-tint {             /* z1: milky/dark tint (frost colour) */
+  position: absolute; inset: 0; z-index: 1; border-radius: inherit;
+  background: rgba(255,255,255,.5);  /* dark glass: rgba(0,0,0,.35) */
+}
+.lg-wrapper > .lg-shine {            /* z2: bright bevelled rim */
+  position: absolute; inset: 0; z-index: 2; border-radius: inherit;
+  box-shadow: inset 2px 2px 1px 0 rgba(255,255,255,.5),
+              inset -1px -1px 1px 1px rgba(255,255,255,.5);
+}
+.lg-wrapper > .lg-content {          /* z3: your content */
+  position: relative; z-index: 3;
+}
